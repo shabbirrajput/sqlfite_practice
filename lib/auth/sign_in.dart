@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqlite_practice/app_config.dart';
+import 'package:sqlite_practice/db/com_helper.dart';
 import 'package:sqlite_practice/db/db_helper.dart';
+import 'package:sqlite_practice/db/navigator_key.dart';
 import 'package:sqlite_practice/models/user_model.dart';
 import 'package:sqlite_practice/screens/home.dart';
 
@@ -28,19 +30,34 @@ class _SignInState extends State<SignIn> {
   login() async {
     String email = emailController.text;
     String passwd = passwordController.text;
-    await dbHeler.getLoginUser(email, passwd).then((userData) {
-      if (userData != null && userData.email != null) {
-        setSP(userData).whenComplete(() {
-          print('--------------->LOGIN SUCCEESSFULLL');
-          Navigator.push(
-              context, MaterialPageRoute(builder: (context) => const Home()));
-        });
-      } else {
-        print("Error: User Not Found");
-      }
-    }).catchError((error) {
-      print("Error: Login Fail");
-    });
+
+    if (email.isEmpty) {
+      alertDialog("Please Enter Email ID");
+    } else if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      alertDialog("Invalid Email");
+    } else if (passwd.isEmpty) {
+      alertDialog("Please Enter Password");
+    } else if (!RegExp(r'(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W)')
+        .hasMatch(passwd)) {
+      alertDialog(
+          "Please Enter Strong Password\n\nHint : Password must contain Upper/Lower case, number and special character");
+    } else {
+      await dbHeler.getLoginUser(email, passwd).then((userData) {
+        if (userData != null && userData.email != null) {
+          setSP(userData).whenComplete(() {
+            print('--------------->LOGIN SUCCEESSFULLL');
+            Navigator.pushAndRemoveUntil(
+                NavigatorKey.navigatorKey.currentContext!,
+                MaterialPageRoute(builder: (_) => const Home()),
+                (Route<dynamic> route) => false);
+          });
+        } else {
+          print("Error: User Not Found");
+        }
+      }).catchError((error) {
+        print("Error: Login Fail");
+      });
+    }
   }
 
   Future setSP(UserModel user) async {
