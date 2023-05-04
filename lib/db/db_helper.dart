@@ -12,11 +12,11 @@ class DbHelper {
   static const String tableUser = 'User';
   static const int version = 1;
 
-  static const String userId = 'Id';
-  static const String userName = 'Name';
-  static const String userEmailAddress = 'Email Address';
-  static const String userMobileNo = 'Mobile No';
-  static const String userPassword = 'Password';
+  static const String userId = 'id';
+  static const String userName = 'name';
+  static const String userEmailAddress = 'email';
+  static const String userMobileNo = 'mobile';
+  static const String userPassword = 'password';
 
   Future<Database> get db async {
     _db = await initDb();
@@ -40,9 +40,22 @@ class DbHelper {
         ")");
   }
 
+  ///Insert Data
   Future<int> saveData(UserModel user) async {
     var dbClient = await db;
     var res = await dbClient.insert(tableUser, user.toJson());
     return res;
+  }
+
+  ///Check User Data
+  Future<UserModel> getLoginUser(String email, String password) async {
+    var dbClient = await db;
+    var res = await dbClient.rawQuery(
+        '''SELECT * FROM $tableUser WHERE $userEmailAddress = '$email' AND $userPassword = '$password' ''');
+
+    if (res.isNotEmpty) {
+      return UserModel.fromJson(res.first);
+    }
+    return UserModel();
   }
 }

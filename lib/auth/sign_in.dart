@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqlite_practice/app_config.dart';
+import 'package:sqlite_practice/db/db_helper.dart';
+import 'package:sqlite_practice/models/user_model.dart';
+import 'package:sqlite_practice/screens/home.dart';
 
 class SignIn extends StatefulWidget {
   const SignIn({Key? key}) : super(key: key);
@@ -8,8 +13,46 @@ class SignIn extends StatefulWidget {
 }
 
 class _SignInState extends State<SignIn> {
+  final Future<SharedPreferences> _pref = SharedPreferences.getInstance();
+
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  var dbHeler;
+
+  @override
+  void initState() {
+    dbHeler = DbHelper();
+    super.initState();
+  }
+
+  login() async {
+    String email = emailController.text;
+    String passwd = passwordController.text;
+    await dbHeler.getLoginUser(email, passwd).then((userData) {
+      if (userData != null && userData.email != null) {
+        setSP(userData).whenComplete(() {
+          print('--------------->LOGIN SUCCEESSFULLL');
+          Navigator.push(
+              context, MaterialPageRoute(builder: (context) => const Home()));
+        });
+      } else {
+        print("Error: User Not Found");
+      }
+    }).catchError((error) {
+      print("Error: Login Fail");
+    });
+  }
+
+  Future setSP(UserModel user) async {
+    final SharedPreferences sp = await _pref;
+
+    sp.setInt(AppConfig.textUserId, user.id!);
+    sp.setString("name", user.name!);
+    sp.setString("email", user.email!);
+    sp.setString("mobileno", user.mobile!);
+    sp.setString("password", user.password!);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,7 +107,9 @@ class _SignInState extends State<SignIn> {
                 height: 20,
               ),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  login();
+                },
                 child: const Text('Sign In'),
               ),
             ],
