@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sqlite_practice/auth/sign_in.dart';
+import 'package:sqlite_practice/db/com_helper.dart';
 import 'package:sqlite_practice/db/db_helper.dart';
 import 'package:sqlite_practice/models/user_model.dart';
 
@@ -29,22 +30,55 @@ class _SignUpState extends State<SignUp> {
     String email = emailController.text;
     String mobileno = mobileController.text;
     String passwd = passController.text;
+    String cpasswd = cPassController.text;
 
-    UserModel uModel = UserModel();
+    bool isExist = false;
+    if (email.isNotEmpty) {
+      await dbHelper.getEmailCheck(email).then((userData) {
+        if (userData != null && userData.email != null) {
+          isExist = true;
+        }
+      });
+    }
 
-    uModel.name = name;
-    uModel.email = email;
-    uModel.mobile = mobileno;
-    uModel.password = passwd;
-    dbHelper = DbHelper();
-    await dbHelper.saveData(uModel).then((userData) {
-      print("Successfully Saved");
-      /* Navigator.push(
-          context, MaterialPageRoute(builder: (_) => const ScreenLogin()));
-*/
-    }).catchError((error) {
-      print("Error: Data Save Fail--$error");
-    });
+    if (name.isEmpty) {
+      alertDialog('Please Enter Name');
+    } else if (email.isEmpty) {
+      alertDialog('Please Enter Email Address');
+    } else if (!RegExp(r'^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      alertDialog('Invalid Email Address');
+    } else if (isExist) {
+      alertDialog('This Email Address Is Already Exist Please Enter New Email');
+    } else if (mobileno.isEmpty) {
+      alertDialog('Please Enter Mobile No');
+    } else if (!RegExp(r'^[0-9]{10}$').hasMatch(mobileno)) {
+      alertDialog('Invalid Mobile No');
+    } else if (passwd.isEmpty) {
+      alertDialog('Please Enter Password');
+    } else if (!RegExp(r'(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W)')
+        .hasMatch(passwd)) {
+      alertDialog(
+          "Please Enter Strong Password\n\nHint : Password must contain Upper/Lower case, number and special character");
+    } else if (cpasswd.isEmpty) {
+      alertDialog('Please Enter Confirm Password');
+    } else if (passwd != cpasswd) {
+      alertDialog('Password Mismatch');
+    } else {
+      UserModel uModel = UserModel();
+
+      uModel.name = name;
+      uModel.email = email;
+      uModel.mobile = mobileno;
+      uModel.password = passwd;
+      dbHelper = DbHelper();
+      await dbHelper.saveData(uModel).then((userData) {
+        print("Successfully Saved");
+        Navigator.push(
+            context, MaterialPageRoute(builder: (context) => const SignIn()));
+      }).catchError((error) {
+        print("Error: Data Save Fail--$error");
+      });
+    }
   }
 
   @override
@@ -141,10 +175,6 @@ class _SignUpState extends State<SignUp> {
               ElevatedButton(
                   onPressed: () {
                     signUp();
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const SignIn()));
                   },
                   child: const Text('Sign Up'))
             ],

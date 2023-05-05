@@ -58,4 +58,20 @@ class DbHelper {
     }
     return UserModel();
   }
+
+  ///Check User Email
+  Future<UserModel> getEmailCheck(String email) async {
+    try {
+      var dbClient = await db;
+      var res = await dbClient.rawQuery(
+          '''SELECT * FROM $tableUser WHERE "$userEmailAddress" = "$email" ''');
+
+      if (res.isNotEmpty) {
+        return UserModel.fromJson(res.first);
+      }
+    } catch (e) {
+      return UserModel();
+    }
+    return UserModel();
+  }
 }
