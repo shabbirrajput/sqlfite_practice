@@ -23,8 +23,8 @@ class _SignInState extends State<SignIn> {
 
   @override
   void initState() {
-    dbHeler = DbHelper();
     super.initState();
+    dbHeler = DbHelper();
   }
 
   login() async {
@@ -45,17 +45,16 @@ class _SignInState extends State<SignIn> {
       await dbHeler.getLoginUser(email, passwd).then((userData) {
         if (userData != null && userData.email != null) {
           setSP(userData).whenComplete(() {
-            print('--------------->LOGIN SUCCEESSFULLL');
             Navigator.pushAndRemoveUntil(
                 NavigatorKey.navigatorKey.currentContext!,
                 MaterialPageRoute(builder: (_) => const Home()),
                 (Route<dynamic> route) => false);
           });
         } else {
-          print("Error: User Not Found");
+          alertDialog("Error: User Not Found");
         }
       }).catchError((error) {
-        print("Error: Login Fail");
+        alertDialog("Error: Login Fail");
       });
     }
   }
